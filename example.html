@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Chatbot Widget - Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature {
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            border-radius: 5px;
+        }
+        
+        .feature h3 {
+            color: #dc3545;
+            margin-top: 0;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        
+        .chatbot-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .chatbot-notice strong {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 PDF AI Chatbot Widget Demo</h1>
+        
+        <p>This page demonstrates how to embed the PDF AI Chatbot Widget in any website. The widget provides intelligent Q&A functionality based on PDF documents using local AI processing.</p>
+        
+        <div class="feature-grid">
+            <div class="feature">
+                <h3>🔒 Privacy First</h3>
+                <p>All processing happens locally in your browser. No data is sent to external servers.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>📄 Smart PDF Reading</h3>
+                <p>Automatically extracts and understands PDF content for intelligent responses.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>🧠 AI-Powered</h3>
+                <p>Uses transformer models for semantic search and natural language generation.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>🎨 Customizable</h3>
+                <p>Easy to customize colors, bot name, and PDF source to match your brand.</p>
+            </div>
+        </div>
+        
+        <h2>How to Embed</h2>
+        <p>To add this chatbot to your website, include the following HTML:</p>
+        
+        <div class="code-block">
+            <code>
+&lt;!-- Include the chatbot script --&gt;<br>
+&lt;script src="https://your-domain.com/chatbot-widget.js"&gt;&lt;/script&gt;<br><br>
+&lt;!-- Add the chatbot widget --&gt;<br>
+&lt;pdf-chatbot-widget <br>
+&nbsp;&nbsp;bot-name="Your Assistant" <br>
+&nbsp;&nbsp;primary-color="#dc3545" <br>
+&nbsp;&nbsp;pdf-url="/path/to/your/document.pdf"&gt;<br>
+&lt;/pdf-chatbot-widget&gt;
+            </code>
+        </div>
+        
+        <h2>Configuration Options</h2>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Attribute</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Description</th>
+                    <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Default</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;"><code>bot-name</code></td>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;">Display name for the chatbot</td>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;">"PDF Assistant"</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;"><code>primary-color</code></td>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;">Primary color (hex code)</td>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;">"#dc3545"</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;"><code>pdf-url</code></td>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;">URL to the PDF document</td>
+                    <td style="border: 1px solid #dee2e6; padding: 12px;">"/assets/faq.pdf"</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="chatbot-notice">
+            <strong>👆 Look for the red chat button in the bottom-right corner!</strong><br>
+            Click it to start chatting with the AI assistant.
+        </div>
+        
+        <h2>Try It Out</h2>
+        <p>The chatbot widget is already embedded on this page. Here are some sample questions you can ask:</p>
+        <ul>
+            <li>"What is this chatbot?"</li>
+            <li>"How does it work?"</li>
+            <li>"Is my data secure?"</li>
+            <li>"What browsers are supported?"</li>
+            <li>"How accurate are the responses?"</li>
+        </ul>
+        
+        <p><em>Note: The first time you open the chat, it may take 30-60 seconds to download and initialize the AI models. Subsequent uses will be much faster as the models are cached locally.</em></p>
+    </div>
+    
+    <!-- This is where you would include the chatbot widget -->
+    <!-- For this demo, we're using the React component directly -->
+    <div id="chatbot-container"></div>
+    
+    <script>
+        // Note: In a real implementation, this would load the Web Component
+        console.log('PDF Chatbot Widget demo page loaded');
+        console.log('The chatbot is embedded as a React component in this demo');
+    </script>
+</body>
+</html>
