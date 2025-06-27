@@ -1,9 +1,9 @@
 
-import { pipeline, Pipeline } from '@huggingface/transformers';
+import { pipeline } from '@huggingface/transformers';
 
 export class ChatService {
-  private embedder: Pipeline | null = null;
-  private generator: Pipeline | null = null;
+  private embedder: any = null;
+  private generator: any = null;
   private chunks: string[] = [];
   private chunkEmbeddings: number[][] = [];
   private initialized = false;
@@ -86,8 +86,8 @@ export class ChatService {
           normalize: true
         });
         
-        // Convert tensor to array
-        const embeddingArray = Array.from(embedding.data);
+        // Convert tensor to array with proper typing
+        const embeddingArray = Array.from(embedding.data as Float32Array) as number[];
         this.chunkEmbeddings.push(embeddingArray);
         
         if ((i + 1) % 10 === 0) {
@@ -134,7 +134,7 @@ export class ChatService {
         normalize: true
       });
       
-      const queryArray = Array.from(queryEmbedding.data);
+      const queryArray = Array.from(queryEmbedding.data as Float32Array) as number[];
       
       // Calculate similarities
       const similarities = this.chunkEmbeddings.map((chunkEmbedding, index) => ({
