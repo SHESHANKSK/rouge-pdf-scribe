@@ -30,8 +30,8 @@ export class ChatService {
       // Initialize text generation model
       console.log('Loading text generation model...');
       this.generator = await pipeline(
-        'text2text-generation',
-        'Xenova/flan-t5-small',
+        'text-generation',
+        'Xenova/phi-1_5',
         {
           device: 'webgpu',
           dtype: 'fp32'
@@ -58,8 +58,8 @@ export class ChatService {
         );
         
         this.generator = await pipeline(
-          'text2text-generation',
-          'Xenova/flan-t5-small',
+          'text-generation',
+          'Xenova/phi-1_5',
           { device: 'cpu' }
         );
         

@@ -72,7 +72,7 @@ const Index = () => {
       <ChatbotWidget 
         botName="PDF Assistant"
         primaryColor="#dc3545"
-        pdfUrl="/assets/sample-faq.pdf"
+        pdfUrl="/assets/knowledge.pdf"
       />
     </div>
   );

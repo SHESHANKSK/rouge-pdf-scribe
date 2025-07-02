@@ -23,7 +23,7 @@ interface ChatbotWidgetProps {
 const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
   botName = 'PDF Assistant',
   primaryColor = '#dc3545',
-  pdfUrl = '/assets/faq.pdf'
+  pdfUrl = '/assets/knowledge.pdf'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -166,20 +166,17 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
 
       {/* Chat Interface */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[500px] z-50 shadow-2xl border-0 overflow-hidden bg-white">
+        <div className="fixed bottom-6 right-6 w-96 h-[500px] z-50 shadow-lg border border-danger rounded overflow-hidden bg-white">
           {/* Header */}
-          <div 
-            className="p-4 text-white flex items-center justify-between"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <div className="flex items-center gap-2">
+          <div className="p-3 bg-danger text-white d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center gap-2">
               <FileText size={20} />
-              <span className="font-semibold">{botName}</span>
+              <span className="fw-bold">{botName}</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-white/20 p-1"
+              className="text-white hover:bg-white/20 p-1 border-0"
               onClick={() => setIsOpen(false)}
             >
               <X size={20} />
@@ -187,32 +184,32 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 h-96">
+          <div className="flex-fill overflow-auto p-3 bg-light" style={{ height: '360px' }}>
             {isInitializing ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="d-flex align-items-center justify-content-center h-100">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-2" style={{ borderColor: primaryColor }}></div>
-                  <p className="text-gray-600">Initializing AI assistant...</p>
+                  <div className="spinner-border text-danger mb-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="text-muted">Initializing AI assistant...</p>
                 </div>
               </div>
             ) : (
               messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}
+                  className={`d-flex ${message.isBot ? 'justify-content-start' : 'justify-content-end'} mb-3`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
+                    className={`p-2 rounded shadow-sm ${
                       message.isBot
-                        ? 'bg-white text-gray-800 shadow-sm'
-                        : 'text-white shadow-sm'
+                        ? 'bg-white text-dark border'
+                        : 'bg-danger text-white'
                     }`}
-                    style={{
-                      backgroundColor: message.isBot ? 'white' : primaryColor
-                    }}
+                    style={{ maxWidth: '80%' }}
                   >
-                    <p className="text-sm">{message.text}</p>
-                    <p className={`text-xs mt-1 ${message.isBot ? 'text-gray-500' : 'text-white/80'}`}>
+                    <p className="mb-1 small">{message.text}</p>
+                    <p className={`mb-0 ${message.isBot ? 'text-muted' : 'text-white-50'}`} style={{ fontSize: '0.75rem' }}>
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -222,12 +219,12 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
             
             {/* Typing Indicator */}
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white p-3 rounded-lg shadow-sm max-w-[80%]">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="d-flex justify-content-start mb-3">
+                <div className="bg-white p-2 rounded shadow-sm border">
+                  <div className="d-flex gap-1">
+                    <div className="bg-secondary rounded-circle" style={{ width: '8px', height: '8px', animation: 'bounce 1.4s infinite' }}></div>
+                    <div className="bg-secondary rounded-circle" style={{ width: '8px', height: '8px', animation: 'bounce 1.4s infinite 0.1s' }}></div>
+                    <div className="bg-secondary rounded-circle" style={{ width: '8px', height: '8px', animation: 'bounce 1.4s infinite 0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -237,28 +234,27 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
           </div>
 
           {/* Input Area */}
-          <div className="p-4 border-t bg-white">
-            <div className="flex gap-2">
-              <Input
+          <div className="p-3 border-top bg-white">
+            <div className="d-flex gap-2">
+              <input
+                type="text"
+                className="form-control"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about the PDF..."
+                placeholder="Ask me anything about the knowledge base..."
                 disabled={isLoading || isInitializing}
-                className="flex-1"
               />
-              <Button
+              <button
+                className="btn btn-danger"
                 onClick={handleSendMessage}
                 disabled={isLoading || !inputText.trim() || isInitializing}
-                size="sm"
-                className="text-white"
-                style={{ backgroundColor: primaryColor }}
               >
                 <Send size={16} />
-              </Button>
+              </button>
             </div>
           </div>
-        </Card>
+        </div>
       )}
     </>
   );
