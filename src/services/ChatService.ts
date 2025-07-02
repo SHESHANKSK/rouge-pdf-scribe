@@ -136,20 +136,41 @@ export class ChatService {
       
       const queryArray = Array.from(queryEmbedding.data as Float32Array) as number[];
       
-      // Calculate similarities
-      const similarities = this.chunkEmbeddings.map((chunkEmbedding, index) => ({
-        index,
-        similarity: this.cosineSimilarity(queryArray, chunkEmbedding),
-        chunk: this.chunks[index]
-      }));
+      // Calculate similarities with enhanced scoring
+      const similarities = this.chunkEmbeddings.map((chunkEmbedding, index) => {
+        const similarity = this.cosineSimilarity(queryArray, chunkEmbedding);
+        
+        // Boost score if chunk contains exact query terms (hybrid search)
+        const chunk = this.chunks[index];
+        const queryWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+        let termBoost = 0;
+        
+        for (const word of queryWords) {
+          if (chunk.toLowerCase().includes(word)) {
+            termBoost += 0.1; // Small boost for exact term matches
+          }
+        }
+        
+        return {
+          index,
+          similarity: similarity + termBoost,
+          chunk,
+          originalSimilarity: similarity
+        };
+      });
       
-      // Sort by similarity and return top chunks
+      // Filter by minimum similarity threshold and sort
+      const relevanceThreshold = 0.2; // Minimum semantic similarity
       const topChunks = similarities
+        .filter(item => item.originalSimilarity >= relevanceThreshold)
         .sort((a, b) => b.similarity - a.similarity)
         .slice(0, topK)
-        .map(item => item.chunk);
+        .map(item => {
+          console.log(`Chunk similarity: ${item.originalSimilarity.toFixed(3)} (boosted: ${item.similarity.toFixed(3)})`);
+          return item.chunk;
+        });
       
-      console.log('Found relevant chunks using semantic search');
+      console.log(`Found ${topChunks.length} relevant chunks using semantic search`);
       return topChunks;
       
     } catch (error) {
@@ -190,29 +211,43 @@ export class ChatService {
     try {
       console.log('Generating response for query:', query);
       
-      // Find relevant context
+      // Find relevant context with higher threshold for relevance
       const relevantChunks = await this.findRelevantChunks(query, 3);
       
       if (relevantChunks.length === 0) {
-        return "I couldn't find relevant information in the PDF to answer your question. Could you try rephrasing or asking about something else?";
+        return "I couldn't find relevant information in the knowledge base to answer your question. Please try asking about topics that are covered in the document.";
       }
       
-      // Combine context
+      // Combine context with strict grounding
       const context = relevantChunks.join('\n\n');
       
-      // Create prompt for text generation
-      const prompt = `Context: ${context}\n\nQuestion: ${query}\n\nAnswer:`;
+      // Enhanced prompt with strict grounding instructions
+      const prompt = `You are a helpful assistant that answers questions ONLY based on the provided context. 
+
+IMPORTANT RULES:
+1. ONLY use information from the provided context
+2. If the answer is not in the context, say "I cannot find this information in the document"
+3. Do not make assumptions or add information not in the context
+4. Be direct and specific in your answers
+
+Context from document:
+${context}
+
+Question: ${query}
+
+Answer based ONLY on the context above:`;
       
       if (!this.generator) {
-        // Fallback to simple context-based response
-        return this.generateSimpleResponse(query, relevantChunks);
+        // Enhanced fallback with better grounding
+        return this.generateGroundedResponse(query, relevantChunks);
       }
       
-      // Generate response using the model
+      // Generate response using the model with conservative settings
       const response = await this.generator(prompt, {
-        max_length: 200,
-        temperature: 0.7,
-        do_sample: true
+        max_length: 150,
+        temperature: 0.1, // Lower temperature for more deterministic responses
+        do_sample: false, // Disable sampling for more grounded responses
+        repetition_penalty: 1.1
       });
       
       let answer = '';
@@ -222,62 +257,112 @@ export class ChatService {
         answer = response.generated_text || '';
       }
       
-      // Clean up the response
-      answer = answer.replace(prompt, '').trim();
+      // Clean up and validate the response
+      answer = this.cleanAndValidateResponse(answer, prompt, context, query);
       
       if (!answer || answer.length < 10) {
-        return this.generateSimpleResponse(query, relevantChunks);
+        return this.generateGroundedResponse(query, relevantChunks);
       }
       
-      console.log('Generated AI response');
+      console.log('Generated grounded AI response');
       return answer;
       
     } catch (error) {
       console.error('Error generating response:', error);
       
-      // Fallback to simple response
+      // Fallback to grounded simple response
       const relevantChunks = await this.findRelevantChunks(query, 2);
-      return this.generateSimpleResponse(query, relevantChunks);
+      return this.generateGroundedResponse(query, relevantChunks);
     }
   }
 
-  private generateSimpleResponse(query: string, relevantChunks: string[]): string {
-    if (relevantChunks.length === 0) {
-      return "I couldn't find relevant information in the PDF to answer your question. Could you try asking about something else?";
+  private cleanAndValidateResponse(response: string, prompt: string, context: string, query: string): string {
+    // Remove the prompt from response
+    let answer = response.replace(prompt, '').trim();
+    
+    // Remove common model artifacts
+    answer = answer.replace(/^(Answer:|Response:|Based on the context:)/i, '').trim();
+    
+    // Check if response contains hallucination indicators
+    const hallucinationPatterns = [
+      /I think|I believe|probably|likely|might be|could be/i,
+      /in general|typically|usually|often/i,
+      /from my knowledge|as far as I know/i
+    ];
+    
+    const hasHallucination = hallucinationPatterns.some(pattern => pattern.test(answer));
+    
+    if (hasHallucination) {
+      console.warn('Potential hallucination detected, using fallback response');
+      return this.generateGroundedResponse(query, [context]);
     }
     
-    // Extract the most relevant sentence from the first chunk
-    const firstChunk = relevantChunks[0];
-    const sentences = firstChunk.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    // Validate that key terms from answer exist in context
+    const answerWords = answer.toLowerCase().split(/\s+/).filter(word => word.length > 3);
+    const contextWords = context.toLowerCase().split(/\s+/);
     
-    if (sentences.length > 0) {
-      const queryWords = query.toLowerCase().split(/\s+/);
-      
-      // Find sentence with most query word matches
-      let bestSentence = sentences[0];
-      let maxMatches = 0;
+    let groundedTerms = 0;
+    for (const word of answerWords.slice(0, 10)) { // Check first 10 significant words
+      if (contextWords.includes(word)) {
+        groundedTerms++;
+      }
+    }
+    
+    // If less than 30% of key terms are grounded, use fallback
+    if (answerWords.length > 0 && (groundedTerms / Math.min(answerWords.length, 10)) < 0.3) {
+      console.warn('Low grounding detected, using fallback response');
+      return this.generateGroundedResponse(query, [context]);
+    }
+    
+    return answer;
+  }
+
+  private generateGroundedResponse(query: string, relevantChunks: string[]): string {
+    if (relevantChunks.length === 0) {
+      return "I cannot find information about this topic in the document. Please ask about topics that are covered in the knowledge base.";
+    }
+    
+    // Extract the most relevant sentences that directly answer the query
+    const queryWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+    let bestMatch = '';
+    let highestScore = 0;
+    
+    for (const chunk of relevantChunks) {
+      const sentences = chunk.split(/[.!?]+/).filter(s => s.trim().length > 20);
       
       for (const sentence of sentences) {
         const sentenceLower = sentence.toLowerCase();
-        let matches = 0;
+        let score = 0;
         
+        // Score based on query word matches
         for (const word of queryWords) {
-          if (word.length > 2 && sentenceLower.includes(word)) {
-            matches++;
+          if (sentenceLower.includes(word)) {
+            score += 1;
           }
         }
         
-        if (matches > maxMatches) {
-          maxMatches = matches;
-          bestSentence = sentence;
+        // Bonus for question-like context
+        if (sentenceLower.includes('what') || sentenceLower.includes('how') || 
+            sentenceLower.includes('why') || sentenceLower.includes('when')) {
+          score += 0.5;
+        }
+        
+        if (score > highestScore) {
+          highestScore = score;
+          bestMatch = sentence.trim();
         }
       }
-      
-      return `Based on the PDF content: ${bestSentence.trim()}.`;
     }
     
-    // Fallback to first part of the chunk
-    const preview = firstChunk.substring(0, 200).trim();
-    return `Based on the PDF content: ${preview}${preview.length === 200 ? '...' : ''}`;
+    if (bestMatch && highestScore > 0) {
+      return `Based on the document: ${bestMatch}.`;
+    }
+    
+    // Fallback to first relevant chunk excerpt
+    const firstChunk = relevantChunks[0];
+    const excerpt = firstChunk.length > 200 ? firstChunk.substring(0, 200) + '...' : firstChunk;
+    return `According to the document: ${excerpt}`;
   }
+
+  // This method has been replaced by generateGroundedResponse above
 }

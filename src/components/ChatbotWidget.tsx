@@ -64,7 +64,7 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
       // Add welcome message
       const welcomeMessage: Message = {
         id: 'welcome',
-        text: `Hello! I'm ${botName}, your AI assistant. I can answer questions based on the loaded PDF document. How can I help you today?`,
+        text: `Hello! I'm ${botName}, your knowledge-based AI assistant. I can answer questions strictly based on the document content. I will only provide information that exists in the knowledge base and will tell you if I cannot find the answer. How can I help you today?`,
         isBot: true,
         timestamp: new Date()
       };
